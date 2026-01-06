@@ -5,7 +5,11 @@ require_relative "shorttags/configuration"
 require_relative "shorttags/client"
 require_relative "shorttags/events/base"
 require_relative "shorttags/events/user_registered"
+require_relative "shorttags/events/user_logged_in"
 require_relative "shorttags/events/user_paid"
+require_relative "shorttags/events/subscription_changed"
+require_relative "shorttags/events/feature_used"
+require_relative "shorttags/events/error_occurred"
 require_relative "shorttags/events/metric_recorded"
 
 module Shorttags
@@ -49,6 +53,19 @@ module Shorttags
       Events::UserRegistered.track(extra)
     end
 
+    # Track a user login
+    #
+    # @param extra [Hash] Additional data (user_id, method, etc.)
+    # @return [Hash] API response
+    #
+    # @example
+    #   Shorttags.login
+    #   Shorttags.login(method: "magic_link")
+    #
+    def login(extra = {})
+      Events::UserLoggedIn.track(extra)
+    end
+
     # Track a payment/revenue event
     #
     # @param amount [Numeric] Payment amount
@@ -61,6 +78,48 @@ module Shorttags
     #
     def payment(amount, extra = {})
       Events::UserPaid.track(extra.merge(amount: amount))
+    end
+
+    # Track a subscription change
+    #
+    # @param tier [String] New subscription tier
+    # @param extra [Hash] Additional data (mrr, previous_tier, etc.)
+    # @return [Hash] API response
+    #
+    # @example
+    #   Shorttags.subscription("pro")
+    #   Shorttags.subscription("pro", mrr: 29.00)
+    #
+    def subscription(tier, extra = {})
+      Events::SubscriptionChanged.track(extra.merge(tier: tier))
+    end
+
+    # Track feature usage
+    #
+    # @param feature [String, Symbol] Feature name
+    # @param extra [Hash] Additional data
+    # @return [Hash] API response
+    #
+    # @example
+    #   Shorttags.feature_used(:export)
+    #   Shorttags.feature_used(:api, endpoint: "/metrics")
+    #
+    def feature_used(feature, extra = {})
+      Events::FeatureUsed.track(extra.merge(feature: feature))
+    end
+
+    # Track an error occurrence
+    #
+    # @param error_type [String, Symbol] Error type/category
+    # @param extra [Hash] Additional data (message, etc.)
+    # @return [Hash] API response
+    #
+    # @example
+    #   Shorttags.error(:validation)
+    #   Shorttags.error(:api, message: "Rate limit exceeded")
+    #
+    def error(error_type, extra = {})
+      Events::ErrorOccurred.track(extra.merge(type: error_type))
     end
 
     # Create and track a custom event

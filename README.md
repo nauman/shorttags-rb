@@ -7,19 +7,13 @@ Simple, lightweight Ruby gem for tracking metrics with [Shorttags](https://short
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'shorttags-rb'
+gem 'shorttags-rb', github: 'nauman/shorttags-rb'
 ```
 
 And then execute:
 
 ```bash
 $ bundle install
-```
-
-Or install it yourself as:
-
-```bash
-$ gem install shorttags-rb
 ```
 
 ## Configuration
@@ -72,6 +66,16 @@ Shorttags.signup
 Shorttags.signup(plan: "free", source: "organic")
 ```
 
+### Track Logins
+
+```ruby
+# Simple login tracking
+Shorttags.login
+
+# With additional data
+Shorttags.login(method: "magic_link", user_id: 123)
+```
+
 ### Track Payments & Revenue
 
 ```ruby
@@ -83,6 +87,34 @@ Shorttags.payment(99.00, mrr: 99.00, plan: "pro")
 
 # Track annual payment
 Shorttags.payment(999.00, plan: "enterprise", billing: "annual")
+```
+
+### Track Subscriptions
+
+```ruby
+# Track subscription tier change
+Shorttags.subscription("pro")
+
+# With MRR
+Shorttags.subscription("pro", mrr: 29.00, previous_tier: "free")
+```
+
+### Track Feature Usage
+
+```ruby
+# Track feature usage
+Shorttags.feature_used(:export)
+Shorttags.feature_used(:api, endpoint: "/metrics")
+Shorttags.feature_used(:dashboard, views: 5)
+```
+
+### Track Errors
+
+```ruby
+# Track error occurrences
+Shorttags.error(:validation)
+Shorttags.error(:api, message: "Rate limit exceeded")
+Shorttags.error(:payment, provider: "stripe")
 ```
 
 ### Track Custom Events
@@ -103,7 +135,11 @@ Shorttags.event(:orders, 1, revenue: 150.00)
 ```ruby
 # For more control, use event classes directly
 Shorttags::Events::UserRegistered.track(plan: "pro")
+Shorttags::Events::UserLoggedIn.track(method: "oauth")
 Shorttags::Events::UserPaid.track(amount: 99.00, mrr: 99.00)
+Shorttags::Events::SubscriptionChanged.track(tier: "pro", mrr: 29.00)
+Shorttags::Events::FeatureUsed.track(feature: :export)
+Shorttags::Events::ErrorOccurred.track(type: :validation)
 Shorttags::Events::MetricRecorded.track(custom_metric: 42)
 ```
 
@@ -123,6 +159,21 @@ class User < ApplicationRecord
 end
 ```
 
+### Track logins in SessionsController
+
+```ruby
+class SessionsController < ApplicationController
+  def create
+    user = User.authenticate(params[:email], params[:password])
+    if user
+      sign_in(user)
+      Shorttags.login(method: "password")
+      redirect_to dashboard_path
+    end
+  end
+end
+```
+
 ### Track payments in controller
 
 ```ruby
@@ -130,9 +181,20 @@ class PaymentsController < ApplicationController
   def create
     @payment = current_user.payments.create!(payment_params)
 
-    Shorttags.payment(@payment.amount, mrr: @payment.mrr)
+    Shorttags.payment(@payment.amount, mrr: @payment.mrr, plan: current_user.plan)
 
     redirect_to dashboard_path
+  end
+end
+```
+
+### Track errors with rescue_from
+
+```ruby
+class ApplicationController < ActionController::Base
+  rescue_from StandardError do |exception|
+    Shorttags.error(:unhandled, message: exception.message)
+    raise exception
   end
 end
 ```
@@ -149,6 +211,19 @@ end
 # Call from anywhere
 TrackMetricsJob.perform_later(daily_active_users: 150)
 ```
+
+## API Reference
+
+| Method | Description | Example |
+|--------|-------------|---------|
+| `track(metrics)` | Track raw metrics hash | `Shorttags.track(views: 100)` |
+| `signup(extra = {})` | Track user signup | `Shorttags.signup(plan: "pro")` |
+| `login(extra = {})` | Track user login | `Shorttags.login` |
+| `payment(amount, extra = {})` | Track payment/revenue | `Shorttags.payment(99.00)` |
+| `subscription(tier, extra = {})` | Track subscription change | `Shorttags.subscription("pro")` |
+| `feature_used(feature, extra = {})` | Track feature usage | `Shorttags.feature_used(:export)` |
+| `error(type, extra = {})` | Track error occurrence | `Shorttags.error(:api)` |
+| `event(name, value = 1, extra = {})` | Track custom event | `Shorttags.event(:orders, 5)` |
 
 ## Error Handling
 
