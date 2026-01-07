@@ -15,7 +15,7 @@ module Shorttags
     end
 
     def api_endpoint
-      "#{base_url}/api/v1/metrics"
+      "#{base_url}/api/notify/#{site_id}"
     end
   end
 end

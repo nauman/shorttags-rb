@@ -19,7 +19,11 @@ RSpec.describe Shorttags::Client do
     end
 
     it "sends POST request to API" do
-      stub = stub_request(:post, "https://shorttags.com/api/v1/metrics")
+      stub = stub_request(:post, "https://shorttags.com/api/notify/test-site")
+        .with(
+          body: '{"signups":1}',
+          headers: { "X-Api-Key" => "test-key", "Content-Type" => "application/json" }
+        )
         .to_return(status: 200, body: '{"success": true}')
 
       client.track(signups: 1)
@@ -28,7 +32,7 @@ RSpec.describe Shorttags::Client do
     end
 
     it "raises ApiError on 401" do
-      stub_request(:post, "https://shorttags.com/api/v1/metrics")
+      stub_request(:post, "https://shorttags.com/api/notify/test-site")
         .to_return(status: 401, body: '{"error": "Invalid API key"}')
 
       expect { client.track(signups: 1) }
@@ -36,7 +40,7 @@ RSpec.describe Shorttags::Client do
     end
 
     it "raises ApiError on 404" do
-      stub_request(:post, "https://shorttags.com/api/v1/metrics")
+      stub_request(:post, "https://shorttags.com/api/notify/test-site")
         .to_return(status: 404, body: '{"error": "Site not found"}')
 
       expect { client.track(signups: 1) }
@@ -44,7 +48,7 @@ RSpec.describe Shorttags::Client do
     end
 
     it "raises ApiError on 429" do
-      stub_request(:post, "https://shorttags.com/api/v1/metrics")
+      stub_request(:post, "https://shorttags.com/api/notify/test-site")
         .to_return(status: 429, body: '{"error": "Rate limit exceeded"}')
 
       expect { client.track(signups: 1) }

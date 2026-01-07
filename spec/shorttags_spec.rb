@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe Shorttags do
+  let(:api_endpoint) { "https://shorttags.com/api/notify/test-site" }
+
   it "has a version number" do
     expect(Shorttags::VERSION).not_to be_nil
   end
@@ -26,10 +28,10 @@ RSpec.describe Shorttags do
     end
 
     it "sends metrics to API" do
-      stub = stub_request(:post, "https://shorttags.com/api/v1/metrics")
+      stub = stub_request(:post, api_endpoint)
         .with(
-          body: { site_id: "test-site", metrics: { "signups" => 1 } }.to_json,
-          headers: { "Authorization" => "Bearer test-key", "Content-Type" => "application/json" }
+          body: '{"signups":1}',
+          headers: { "X-Api-Key" => "test-key", "Content-Type" => "application/json" }
         )
         .to_return(status: 200, body: '{"success": true}')
 
@@ -48,8 +50,8 @@ RSpec.describe Shorttags do
     end
 
     it "tracks signup event" do
-      stub = stub_request(:post, "https://shorttags.com/api/v1/metrics")
-        .with(body: hash_including("metrics" => hash_including("signups" => 1)))
+      stub = stub_request(:post, api_endpoint)
+        .with(body: hash_including("signups" => 1))
         .to_return(status: 200, body: '{"success": true}')
 
       Shorttags.signup
@@ -58,8 +60,8 @@ RSpec.describe Shorttags do
     end
 
     it "includes extra data" do
-      stub = stub_request(:post, "https://shorttags.com/api/v1/metrics")
-        .with(body: hash_including("metrics" => hash_including("signups" => 1, "plan" => "pro")))
+      stub = stub_request(:post, api_endpoint)
+        .with(body: hash_including("signups" => 1, "plan" => "pro"))
         .to_return(status: 200, body: '{"success": true}')
 
       Shorttags.signup(plan: "pro")
@@ -77,8 +79,8 @@ RSpec.describe Shorttags do
     end
 
     it "tracks payment with amount" do
-      stub = stub_request(:post, "https://shorttags.com/api/v1/metrics")
-        .with(body: hash_including("metrics" => hash_including("payments" => 1, "revenue" => 99.0)))
+      stub = stub_request(:post, api_endpoint)
+        .with(body: hash_including("payments" => 1, "revenue" => 99.0))
         .to_return(status: 200, body: '{"success": true}')
 
       Shorttags.payment(99.0)
@@ -96,8 +98,8 @@ RSpec.describe Shorttags do
     end
 
     it "tracks custom event with default value" do
-      stub = stub_request(:post, "https://shorttags.com/api/v1/metrics")
-        .with(body: hash_including("metrics" => hash_including("page_views" => 1)))
+      stub = stub_request(:post, api_endpoint)
+        .with(body: hash_including("page_views" => 1))
         .to_return(status: 200, body: '{"success": true}')
 
       Shorttags.event(:page_views)
@@ -106,8 +108,8 @@ RSpec.describe Shorttags do
     end
 
     it "tracks custom event with custom value" do
-      stub = stub_request(:post, "https://shorttags.com/api/v1/metrics")
-        .with(body: hash_including("metrics" => hash_including("api_calls" => 5)))
+      stub = stub_request(:post, api_endpoint)
+        .with(body: hash_including("api_calls" => 5))
         .to_return(status: 200, body: '{"success": true}')
 
       Shorttags.event(:api_calls, 5)

@@ -42,13 +42,17 @@ RSpec.describe Shorttags::Configuration do
   end
 
   describe "#api_endpoint" do
-    it "returns the full API URL" do
-      expect(config.api_endpoint).to eq("https://shorttags.com/api/v1/metrics")
+    before do
+      config.site_id = "my-site"
+    end
+
+    it "returns the full API URL with site_id" do
+      expect(config.api_endpoint).to eq("https://shorttags.com/api/notify/my-site")
     end
 
     it "uses custom base_url" do
       config.base_url = "https://custom.example.com"
-      expect(config.api_endpoint).to eq("https://custom.example.com/api/v1/metrics")
+      expect(config.api_endpoint).to eq("https://custom.example.com/api/notify/my-site")
     end
   end
 end

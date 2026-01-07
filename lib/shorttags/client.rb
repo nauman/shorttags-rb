@@ -25,14 +25,10 @@ module Shorttags
 
       request = Net::HTTP::Post.new(uri.path)
       request["Content-Type"] = "application/json"
-      request["Authorization"] = "Bearer #{@config.api_key}"
+      request["X-API-Key"] = @config.api_key
 
-      payload = {
-        site_id: @config.site_id,
-        metrics: normalize_metrics(metrics)
-      }
-
-      request.body = payload.to_json
+      # API expects flat hash of metrics: { metric_name: value }
+      request.body = normalize_metrics(metrics).to_json
 
       response = http.request(request)
 
