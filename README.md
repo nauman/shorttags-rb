@@ -130,6 +130,25 @@ Shorttags.event(:api_calls, 5)
 Shorttags.event(:orders, 1, revenue: 150.00)
 ```
 
+### Track Analytics (Pageviews, Visitors, Sessions)
+
+```ruby
+# Track pageviews
+Shorttags.pageview
+Shorttags.pageview(1, path: "/pricing")
+Shorttags.pageview(5, unique_pageviews: 3)
+
+# Track visitors
+Shorttags.visitor
+Shorttags.visitor(1, source: "google")
+Shorttags.visitor(10, country: "US")
+
+# Track sessions
+Shorttags.session
+Shorttags.session(1, duration: 120)
+Shorttags.session(1, bounce: true)
+```
+
 ### Using Event Classes Directly
 
 ```ruby
@@ -141,6 +160,9 @@ Shorttags::Events::SubscriptionChanged.track(tier: "pro", mrr: 29.00)
 Shorttags::Events::FeatureUsed.track(feature: :export)
 Shorttags::Events::ErrorOccurred.track(type: :validation)
 Shorttags::Events::MetricRecorded.track(custom_metric: 42)
+Shorttags::Events::PageviewTracked.track(count: 1, path: "/home")
+Shorttags::Events::VisitorTracked.track(count: 1, source: "google")
+Shorttags::Events::SessionTracked.track(count: 1, duration: 120)
 ```
 
 ## Rails Integration Examples
@@ -224,6 +246,9 @@ TrackMetricsJob.perform_later(daily_active_users: 150)
 | `feature_used(feature, extra = {})` | Track feature usage | `Shorttags.feature_used(:export)` |
 | `error(type, extra = {})` | Track error occurrence | `Shorttags.error(:api)` |
 | `event(name, value = 1, extra = {})` | Track custom event | `Shorttags.event(:orders, 5)` |
+| `pageview(count = 1, extra = {})` | Track pageviews | `Shorttags.pageview(1, path: "/")` |
+| `visitor(count = 1, extra = {})` | Track visitors | `Shorttags.visitor` |
+| `session(count = 1, extra = {})` | Track sessions | `Shorttags.session(1, duration: 60)` |
 
 ## Error Handling
 

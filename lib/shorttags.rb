@@ -11,6 +11,9 @@ require_relative "shorttags/events/subscription_changed"
 require_relative "shorttags/events/feature_used"
 require_relative "shorttags/events/error_occurred"
 require_relative "shorttags/events/metric_recorded"
+require_relative "shorttags/events/pageview_tracked"
+require_relative "shorttags/events/visitor_tracked"
+require_relative "shorttags/events/session_tracked"
 
 module Shorttags
   class << self
@@ -136,6 +139,51 @@ module Shorttags
     #
     def event(name, value = 1, extra = {})
       Events::MetricRecorded.track({ name.to_sym => value }.merge(extra))
+    end
+
+    # Track a pageview
+    #
+    # @param count [Integer] Number of pageviews (default: 1)
+    # @param extra [Hash] Additional data (path, referrer, etc.)
+    # @return [Hash] API response
+    #
+    # @example
+    #   Shorttags.pageview
+    #   Shorttags.pageview(1, path: "/pricing")
+    #   Shorttags.pageview(5, unique_pageviews: 3)
+    #
+    def pageview(count = 1, extra = {})
+      Events::PageviewTracked.track(extra.merge(count: count))
+    end
+
+    # Track a visitor
+    #
+    # @param count [Integer] Number of visitors (default: 1)
+    # @param extra [Hash] Additional data (source, country, etc.)
+    # @return [Hash] API response
+    #
+    # @example
+    #   Shorttags.visitor
+    #   Shorttags.visitor(1, source: "google")
+    #   Shorttags.visitor(10, country: "US")
+    #
+    def visitor(count = 1, extra = {})
+      Events::VisitorTracked.track(extra.merge(count: count))
+    end
+
+    # Track a session/visit
+    #
+    # @param count [Integer] Number of sessions (default: 1)
+    # @param extra [Hash] Additional data (duration, bounce, etc.)
+    # @return [Hash] API response
+    #
+    # @example
+    #   Shorttags.session
+    #   Shorttags.session(1, duration: 120)
+    #   Shorttags.session(1, bounce: true)
+    #
+    def session(count = 1, extra = {})
+      Events::SessionTracked.track(extra.merge(count: count))
     end
 
     # Get the client instance

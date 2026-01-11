@@ -117,4 +117,91 @@ RSpec.describe Shorttags do
       expect(stub).to have_been_requested
     end
   end
+
+  describe ".pageview" do
+    before do
+      Shorttags.configure do |config|
+        config.api_key = "test-key"
+        config.site_id = "test-site"
+      end
+    end
+
+    it "tracks pageview with default count" do
+      stub = stub_request(:post, api_endpoint)
+        .with(body: hash_including("pageviews" => 1))
+        .to_return(status: 200, body: '{"success": true}')
+
+      Shorttags.pageview
+
+      expect(stub).to have_been_requested
+    end
+
+    it "tracks pageview with custom count and extra data" do
+      stub = stub_request(:post, api_endpoint)
+        .with(body: hash_including("pageviews" => 5, "path" => "/pricing"))
+        .to_return(status: 200, body: '{"success": true}')
+
+      Shorttags.pageview(5, path: "/pricing")
+
+      expect(stub).to have_been_requested
+    end
+  end
+
+  describe ".visitor" do
+    before do
+      Shorttags.configure do |config|
+        config.api_key = "test-key"
+        config.site_id = "test-site"
+      end
+    end
+
+    it "tracks visitor with default count" do
+      stub = stub_request(:post, api_endpoint)
+        .with(body: hash_including("visitors" => 1))
+        .to_return(status: 200, body: '{"success": true}')
+
+      Shorttags.visitor
+
+      expect(stub).to have_been_requested
+    end
+
+    it "tracks visitor with extra data" do
+      stub = stub_request(:post, api_endpoint)
+        .with(body: hash_including("visitors" => 10, "source" => "google"))
+        .to_return(status: 200, body: '{"success": true}')
+
+      Shorttags.visitor(10, source: "google")
+
+      expect(stub).to have_been_requested
+    end
+  end
+
+  describe ".session" do
+    before do
+      Shorttags.configure do |config|
+        config.api_key = "test-key"
+        config.site_id = "test-site"
+      end
+    end
+
+    it "tracks session with default count" do
+      stub = stub_request(:post, api_endpoint)
+        .with(body: hash_including("sessions" => 1))
+        .to_return(status: 200, body: '{"success": true}')
+
+      Shorttags.session
+
+      expect(stub).to have_been_requested
+    end
+
+    it "tracks session with extra data" do
+      stub = stub_request(:post, api_endpoint)
+        .with(body: hash_including("sessions" => 1, "duration" => 120))
+        .to_return(status: 200, body: '{"success": true}')
+
+      Shorttags.session(1, duration: 120)
+
+      expect(stub).to have_been_requested
+    end
+  end
 end
