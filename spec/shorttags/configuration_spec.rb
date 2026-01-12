@@ -55,4 +55,25 @@ RSpec.describe Shorttags::Configuration do
       expect(config.api_endpoint).to eq("https://custom.example.com/api/notify/my-site")
     end
   end
+
+  describe "#enabled?" do
+    context "when explicitly set" do
+      it "returns true when set to true" do
+        config.enabled = true
+        expect(config.enabled?).to be true
+      end
+
+      it "returns false when set to false" do
+        config.enabled = false
+        expect(config.enabled?).to be false
+      end
+    end
+
+    context "when not explicitly set (nil)" do
+      it "returns true when Rails is not defined" do
+        # Rails is not defined in this spec environment
+        expect(config.enabled?).to be true
+      end
+    end
+  end
 end

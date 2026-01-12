@@ -15,6 +15,7 @@ module Shorttags
     end
 
     def track(metrics)
+      return { skipped: true, reason: "tracking disabled" } unless @config.enabled?
       validate_configuration!
 
       uri = URI.parse(@config.api_endpoint)
