@@ -4,7 +4,7 @@ module Shorttags
   module Events
     class UserLoggedIn < Base
       def to_metrics
-        { logins: 1 }.merge(data)
+        { logins: 1 }.merge(numeric_data)
       end
     end
   end
