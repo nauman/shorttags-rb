@@ -31,7 +31,7 @@ module Shorttags
       @configuration = Configuration.new
     end
 
-    # Track custom metrics
+    # Track custom metrics (additive - values sum over time)
     #
     # @param metrics [Hash] The metrics to track
     # @return [Hash] API response
@@ -41,6 +41,20 @@ module Shorttags
     #
     def track(metrics)
       client.track(metrics)
+    end
+
+    # Set absolute accumulator values (overwrites, not additive)
+    # Use this for lifetime totals that should reflect current state
+    #
+    # @param metrics [Hash] The accumulator values to set
+    # @return [Hash] API response
+    #
+    # @example
+    #   Shorttags.accumulate(total_users: 150, total_orders: 500)
+    #   Shorttags.accumulate(total_members: User.count)
+    #
+    def accumulate(metrics)
+      client.accumulate(metrics)
     end
 
     # Track a user signup

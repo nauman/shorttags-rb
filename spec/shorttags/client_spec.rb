@@ -55,4 +55,42 @@ RSpec.describe Shorttags::Client do
         .to raise_error(Shorttags::Client::ApiError, "Rate limit exceeded")
     end
   end
+
+  describe "#accumulate" do
+    it "raises ConfigurationError when not configured" do
+      Shorttags.reset_configuration!
+
+      expect { client.accumulate(total_users: 100) }
+        .to raise_error(Shorttags::Client::ConfigurationError)
+    end
+
+    it "sends PUT request to accumulators endpoint" do
+      stub = stub_request(:put, "https://shorttags.com/api/notify/test-site/accumulators")
+        .with(
+          body: '{"total_users":100,"total_orders":50}',
+          headers: { "X-Api-Key" => "test-key", "Content-Type" => "application/json" }
+        )
+        .to_return(status: 200, body: '{"success": true}')
+
+      client.accumulate(total_users: 100, total_orders: 50)
+
+      expect(stub).to have_been_requested
+    end
+
+    it "raises ApiError on 401" do
+      stub_request(:put, "https://shorttags.com/api/notify/test-site/accumulators")
+        .to_return(status: 401, body: '{"error": "Invalid API key"}')
+
+      expect { client.accumulate(total_users: 100) }
+        .to raise_error(Shorttags::Client::ApiError, "Invalid API key")
+    end
+
+    it "raises ApiError on 404" do
+      stub_request(:put, "https://shorttags.com/api/notify/test-site/accumulators")
+        .to_return(status: 404, body: '{"error": "Site not found"}')
+
+      expect { client.accumulate(total_users: 100) }
+        .to raise_error(Shorttags::Client::ApiError, "Site not found")
+    end
+  end
 end

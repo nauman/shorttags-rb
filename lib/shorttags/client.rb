@@ -42,6 +42,34 @@ module Shorttags
       raise ApiError, "Request failed: #{e.message}"
     end
 
+    # Set absolute accumulator values (overwrites, not additive)
+    def accumulate(metrics)
+      return { skipped: true, reason: "tracking disabled" } unless @config.enabled?
+      validate_configuration!
+
+      uri = URI.parse(@config.accumulator_endpoint)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = uri.scheme == "https"
+      http.open_timeout = @config.open_timeout
+      http.read_timeout = @config.timeout
+
+      request = Net::HTTP::Put.new(uri.path)
+      request["Content-Type"] = "application/json"
+      request["X-API-Key"] = @config.api_key
+
+      request.body = normalize_metrics(metrics).to_json
+
+      response = http.request(request)
+
+      handle_response(response)
+    rescue ConfigurationError, ApiError
+      raise
+    rescue Net::OpenTimeout, Net::ReadTimeout => e
+      raise ApiError, "Request timed out: #{e.message}"
+    rescue StandardError => e
+      raise ApiError, "Request failed: #{e.message}"
+    end
+
     private
 
     def validate_configuration!

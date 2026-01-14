@@ -33,5 +33,9 @@ module Shorttags
     def api_endpoint
       "#{base_url}/api/notify/#{site_id}"
     end
+
+    def accumulator_endpoint
+      "#{base_url}/api/notify/#{site_id}/accumulators"
+    end
   end
 end
