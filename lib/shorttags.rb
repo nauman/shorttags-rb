@@ -14,6 +14,7 @@ require_relative "shorttags/events/metric_recorded"
 require_relative "shorttags/events/pageview_tracked"
 require_relative "shorttags/events/visitor_tracked"
 require_relative "shorttags/events/session_tracked"
+require_relative "shorttags/callbacks"
 
 module Shorttags
   class << self
@@ -41,6 +42,32 @@ module Shorttags
     #
     def track(metrics)
       client.track(metrics)
+    end
+
+    # Send an actionable metric that shows in dashboard for approve/reject
+    #
+    # @param name [String, Symbol] Metric name
+    # @param value [Numeric] Metric value (default: 1)
+    # @param payload [Hash] Data to include in callback when action is taken
+    # @return [Hash] API response with action_request_id
+    #
+    # @example Send site submission for approval
+    #   Shorttags.action(:pending_site, 1, {
+    #     site_id: site.id,
+    #     title: site.title,
+    #     link: site.link,
+    #     user_email: site.user.email
+    #   })
+    #
+    # @example Send refund request
+    #   Shorttags.action(:refund_request, 1, {
+    #     order_id: order.id,
+    #     amount: order.total,
+    #     reason: params[:reason]
+    #   })
+    #
+    def action(name, value = 1, payload = {})
+      client.track_action(name, value, payload)
     end
 
     # Set absolute accumulator values (overwrites, not additive)

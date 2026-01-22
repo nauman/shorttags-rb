@@ -130,6 +130,65 @@ Shorttags.event(:api_calls, 5)
 Shorttags.event(:orders, 1, revenue: 150.00)
 ```
 
+### Actionable Metrics (Webhook Actions)
+
+Send metrics that require human approval (e.g., moderation queues, refund requests):
+
+```ruby
+# Send a site submission for approval
+Shorttags.action(:pending_site, 1, {
+  site_id: site.id,
+  title: site.title,
+  link: site.link,
+  user_email: user.email
+})
+
+# Send a refund request
+Shorttags.action(:refund_request, 1, {
+  order_id: order.id,
+  amount: order.total,
+  reason: params[:reason]
+})
+```
+
+The metric shows in your Shorttags dashboard with Approve/Reject buttons. When actioned, Shorttags calls your callback URL with the decision.
+
+### Handling Callbacks
+
+Include the `Shorttags::Callbacks` module in your controller:
+
+```ruby
+class ShorttagsCallbacksController < ApplicationController
+  include Shorttags::Callbacks
+  skip_before_action :verify_authenticity_token
+
+  def create
+    handle_shorttags_callback do |callback|
+      case callback.metric_name
+      when "pending_site"
+        site = Site.find(callback["site_id"])
+        if callback.approved?
+          site.approve!
+        else
+          site.reject!
+        end
+      when "refund_request"
+        order = Order.find(callback["order_id"])
+        callback.approved? ? order.refund! : order.deny_refund!
+      end
+    end
+  end
+end
+```
+
+Callback object methods:
+- `callback.approved?` - Returns true if action was approved
+- `callback.rejected?` - Returns true if action was rejected
+- `callback["key"]` or `callback[:key]` - Access payload data
+- `callback.payload` - Full payload hash
+- `callback.decided_by` - Email of person who took action
+- `callback.decided_at` - Time action was taken
+
 ### Track Analytics (Pageviews, Visitors, Sessions)
 
 ```ruby
@@ -239,6 +298,7 @@ TrackMetricsJob.perform_later(daily_active_users: 150)
 | Method | Description | Example |
 |--------|-------------|---------|
 | `track(metrics)` | Track raw metrics hash | `Shorttags.track(views: 100)` |
+| `action(name, value, payload)` | Send actionable metric | `Shorttags.action(:pending_site, 1, {site_id: 1})` |
 | `signup(extra = {})` | Track user signup | `Shorttags.signup(plan: "pro")` |
 | `login(extra = {})` | Track user login | `Shorttags.login` |
 | `payment(amount, extra = {})` | Track payment/revenue | `Shorttags.payment(99.00)` |

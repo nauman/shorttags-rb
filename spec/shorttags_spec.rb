@@ -59,12 +59,12 @@ RSpec.describe Shorttags do
       expect(stub).to have_been_requested
     end
 
-    it "includes extra data" do
+    it "includes extra numeric data" do
       stub = stub_request(:post, api_endpoint)
-        .with(body: hash_including("signups" => 1, "plan" => "pro"))
+        .with(body: hash_including("signups" => 1, "referral_bonus" => 10))
         .to_return(status: 200, body: '{"success": true}')
 
-      Shorttags.signup(plan: "pro")
+      Shorttags.signup(referral_bonus: 10)
 
       expect(stub).to have_been_requested
     end
@@ -200,6 +200,48 @@ RSpec.describe Shorttags do
         .to_return(status: 200, body: '{"success": true}')
 
       Shorttags.session(1, duration: 120)
+
+      expect(stub).to have_been_requested
+    end
+  end
+
+  describe ".action" do
+    before do
+      Shorttags.configure do |config|
+        config.api_key = "test-key"
+        config.site_id = "test-site"
+      end
+    end
+
+    it "sends actionable metric with query param" do
+      stub = stub_request(:post, "#{api_endpoint}?actionable=true")
+        .with(body: hash_including("pending_site" => 1))
+        .to_return(status: 200, body: '{"success": true, "action_request_id": 123}')
+
+      Shorttags.action(:pending_site)
+
+      expect(stub).to have_been_requested
+    end
+
+    it "includes payload in request body" do
+      stub = stub_request(:post, "#{api_endpoint}?actionable=true")
+        .with(body: hash_including(
+          "pending_site" => 1,
+          "_payload" => { "site_id" => 42, "title" => "My Site" }
+        ))
+        .to_return(status: 200, body: '{"success": true}')
+
+      Shorttags.action(:pending_site, 1, { site_id: 42, title: "My Site" })
+
+      expect(stub).to have_been_requested
+    end
+
+    it "tracks with custom value" do
+      stub = stub_request(:post, "#{api_endpoint}?actionable=true")
+        .with(body: hash_including("refund_amount" => 99))
+        .to_return(status: 200, body: '{"success": true}')
+
+      Shorttags.action(:refund_amount, 99)
 
       expect(stub).to have_been_requested
     end

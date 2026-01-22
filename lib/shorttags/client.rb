@@ -14,22 +14,27 @@ module Shorttags
       @config = configuration || Shorttags.configuration
     end
 
-    def track(metrics)
+    def track(metrics, actionable: false, payload: nil)
       return { skipped: true, reason: "tracking disabled" } unless @config.enabled?
       validate_configuration!
 
       uri = URI.parse(@config.api_endpoint)
+      # Add actionable query param if specified
+      uri.query = "actionable=true" if actionable
+
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = uri.scheme == "https"
       http.open_timeout = @config.open_timeout
       http.read_timeout = @config.timeout
 
-      request = Net::HTTP::Post.new(uri.path)
+      request = Net::HTTP::Post.new(uri.request_uri)
       request["Content-Type"] = "application/json"
       request["X-API-Key"] = @config.api_key
 
       # API expects flat hash of metrics: { metric_name: value }
-      request.body = normalize_metrics(metrics).to_json
+      body = normalize_metrics(metrics)
+      body["_payload"] = payload if payload && actionable
+      request.body = body.to_json
 
       response = http.request(request)
 
@@ -40,6 +45,11 @@ module Shorttags
       raise ApiError, "Request timed out: #{e.message}"
     rescue StandardError => e
       raise ApiError, "Request failed: #{e.message}"
+    end
+
+    # Track an actionable metric that will show in dashboard for approve/reject
+    def track_action(name, value = 1, payload = {})
+      track({ name.to_sym => value }, actionable: true, payload: payload)
     end
 
     # Set absolute accumulator values (overwrites, not additive)
